@@ -1,0 +1,86 @@
+{
+  "name": "Business Card to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "business-card",
+        "responseMode": "onReceived"
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.ocr.space/parse/image",
+        "method": "POST",
+        "sendFormDataAs": "multipart-form-data",
+        "formData": {
+          "apikey": "={{ $env.OCR_SPACE_API_KEY }}",
+          "file": "={{ $binary.data }}",
+          "language": "eng"
+        }
+      },
+      "name": "OCR Processing",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "resource": "chat",
+        "prompt": {
+          "role": "system",
+          "content": "={{ $json.promptTemplate }}"
+        },
+        "model": "gpt-3.5-turbo",
+        "options": {
+          "responseFormat": "json"
+        }
+      },
+      "name": "Parse with ChatGPT",
+      "type": "n8n-nodes-base.openAi",
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "resource": "sheet",
+        "operation": "append",
+        "sheetName": "Contacts",
+        "columns": {
+          "Name": "={{ $json.name }}",
+          "Email": "={{ $json.email }}",
+          "Phone": "={{ $json.phone }}"
+        }
+      },
+      "name": "Store in Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "to": "={{ $json.email }}",
+        "subject": "Nice to Connect!",
+        "text": "={{ $json.emailTemplate }}"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [["OCR Processing"]]
+    },
+    "OCR Processing": {
+      "main": [["Parse with ChatGPT"]]
+    },
+    "Parse with ChatGPT": {
+      "main": [["Store in Google Sheets"]]
+    },
+    "Store in Google Sheets": {
+      "main": [["Send Email"]]
+    }
+  }
+}

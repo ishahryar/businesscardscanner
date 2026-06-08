@@ -1,0 +1,7 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["expo-router"]
+  },
+  "include": ["app", "src", "types", "expo-env.d.ts"]
+}

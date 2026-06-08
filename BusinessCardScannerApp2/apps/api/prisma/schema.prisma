@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Contact {
+  id                 String   @id @default(cuid())
+  ownerId            String
+  firstName          String
+  lastName           String
+  email              String?
+  phone              String?
+  title              String?
+  company            String?
+  website            String?
+  address            String?
+  country            String?
+  ocrConfidenceJson  Json?
+  createdAt          DateTime @default(now())
+  notes              Note[]
+  drafts             Draft[]
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model OfferProfile {
+  id               String   @id @default(cuid())
+  ownerId          String
+  productsJson     Json
+  servicesJson     Json
+  claimsBlacklist  String?
+  tone             String?
+  regionsSupported String?
+  createdAt        DateTime @default(now())
+}
+
+model Draft {
+  id        String   @id @default(cuid())
+  contact   Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  channel   DraftChannel
+  subject   String?
+  body      String
+  rationaleJson Json
+  createdAt DateTime @default(now())
+  sentAt    DateTime?
+  status    String   @default("pending")
+}
+
+enum DraftChannel {
+  email
+  whatsapp
+  sms
+}
